@@ -29,7 +29,8 @@ function clearOutput() {
   lastResponseText = null;
   copyBtn.disabled = true;
   copyBtn.classList.remove('copied');
-  copyBtn.textContent = 'Copy JSON';
+  copyBtn.title = 'Copy JSON';
+  copyBtn.setAttribute('aria-label', 'Copy JSON');
 }
 
 async function loadFixtures() {
@@ -137,10 +138,12 @@ async function copyResponse() {
       document.execCommand('copy');
       area.remove();
     }
-    copyBtn.textContent = 'Copied!';
+    copyBtn.title = 'Copied!';
+    copyBtn.setAttribute('aria-label', 'Copied!');
     copyBtn.classList.add('copied');
     setTimeout(() => {
-      copyBtn.textContent = 'Copy JSON';
+      copyBtn.title = 'Copy JSON';
+      copyBtn.setAttribute('aria-label', 'Copy JSON');
       copyBtn.classList.remove('copied');
     }, 1500);
   } catch (error) {
