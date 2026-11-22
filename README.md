@@ -7,6 +7,7 @@ Built with **TypeScript + Hono on Cloudflare Workers**, **D1** for persistence, 
 > The AI is a dependency, not the project. The project is the contract: validation, caching, idempotency, retries, and error semantics.
 
 **Live API:** `https://structured-extraction-api.bhalder.workers.dev` · seeded with 7 cached demo fixtures.
+**Live demo:** `https://biswajit-halder.github.io/structured-extraction-api/` (GitHub Pages, `gh-pages` branch).
 
 ---
 
@@ -189,7 +190,7 @@ curl -X POST https://YOUR_WORKER.workers.dev/admin/seed \
 
 The admin token is stored only as a Worker secret and in the gitignored `.dev.vars`. Rotate with `wrangler secret put ADMIN_TOKEN` if it is ever exposed.
 
-Push the `demo/` folder to a repository with GitHub Pages enabled (or use the included workflow). Set the API base URL in the demo page to your Workers URL. Set `ALLOWED_ORIGIN` in `wrangler.toml` to your `https://USERNAME.github.io` origin for production CORS (the default `*` is convenient for local testing).
+The static demo in `demo/` is published from the `gh-pages` branch via GitHub Pages (Settings → Pages → Deploy from a branch). After changing demo files, copy `demo/*` to the root of `gh-pages` and push that branch. Set the API base URL in the demo page to your Workers URL. Set `ALLOWED_ORIGIN` in `wrangler.toml` to your `https://USERNAME.github.io` origin for production CORS (the default `*` is convenient for local testing).
 
 ---
 
