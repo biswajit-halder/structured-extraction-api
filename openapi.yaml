@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: Structured Extraction API
+  version: 1.0.0
+  description: >
+    Schema-validated resume / job-posting extraction on Cloudflare Workers using
+    free OpenRouter models. Results are cached by a schema-versioned SHA-256 hash,
+    so repeated requests cost zero model calls.
+servers:
+  - url: https://structured-extraction-api.bhalder.workers.dev
+    description: Deployed Cloudflare Worker
+
+paths:
+  /health:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  time: { type: string, format: date-time }
+
+  /v1/schemas:
+    get:
+      summary: List supported extraction schemas and their strict JSON Schemas
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schemas:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, example: resume }
+                        version: { type: string, example: 1.0.0 }
+                        description: { type: string }
+                        jsonSchema: { type: object }
+
+  /v1/schemas/fixtures:
+    get:
+      summary: Demo input texts used by the seed job and the static demo page
+      responses:
+        '200':
+          description: OK
+
+  /v1/extractions:
+    post:
+      summary: Extract structured data from raw text
+      description: >
+        A hash of (schema + version + normalized text) is used as the cache key and
+        idempotency guard. Cache hits return 200 and never call the model.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text, schema]
+              properties:
+                text:
+                  type: string
+                  minLength: 1
+                  maxLength: 8000
+                  description: Unstructured resume or job posting text
+                schema:
+                  type: string
+                  enum: [resume, job_posting]
+                idempotencyKey:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                  description: Optional client-generated key for safe retries
+            examples:
+              resume:
+                summary: Resume extraction
+                value:
+                  schema: resume
+                  text: "Jane Doe\njane@example.com\nNode.js developer, 2023-01 to 2024-06 at Acme."
+      responses:
+        '201':
+          description: New extraction created
+          headers:
+            X-Cache:
+              schema: { type: string, enum: [MISS, HIT, STALE] }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractionResponse'
+        '200':
+          description: Cache hit (no model call)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
+          description: OpenRouter free quota exhausted
+        '422':
+          description: Model output failed validation after one repair attempt
+        '429':
+          description: Rate limited
+
+  /v1/extractions/batch:
+    post:
+      summary: Extract up to 5 documents in one model call
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items, schema]
+              properties:
+                schema: { type: string, enum: [resume, job_posting] }
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 5
+                  items:
+                    type: object
+                    required: [text]
+                    properties:
+                      clientId: { type: string, maxLength: 64 }
+                      text: { type: string, minLength: 1, maxLength: 8000 }
+      responses:
+        '201':
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        clientId: { type: string }
+                        response: { $ref: '#/components/schemas/ExtractionResponse' }
+                  meta:
+                    type: object
+                    properties:
+                      model: { type: string }
+                      llmCalls: { type: integer }
+                      tokens: { $ref: '#/components/schemas/Tokens' }
+                      latencyMs: { type: integer }
+                      repairAttempts: { type: integer }
+
+  /v1/extractions/{id}:
+    get:
+      summary: Fetch a previously stored extraction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractionResponse'
+        '404':
+          description: Not found
+
+  /admin/seed:
+    post:
+      summary: Pre-populate the cache with curated fixtures (protected)
+      parameters:
+        - in: header
+          name: x-admin-token
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Seed summary
+        '401':
+          description: Unauthorized
+
+components:
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Tokens:
+      type: object
+      properties:
+        prompt: { type: integer }
+        completion: { type: integer }
+    ExtractionResponse:
+      type: object
+      properties:
+        id: { type: string, example: ext_01JABCDEFGH }
+        schema: { type: string, example: resume }
+        schemaVersion: { type: string, example: 1.0.0 }
+        data:
+          type: object
+          description: Validated object matching the requested schema
+          additionalProperties: true
+        meta:
+          type: object
+          properties:
+            cached: { type: boolean }
+            cacheSource: { type: string, enum: [kv, d1, llm] }
+            stale: { type: boolean }
+            model: { type: string }
+            tokens: { $ref: '#/components/schemas/Tokens' }
+            latencyMs: { type: integer }
+            repairAttempts: { type: integer }
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string, example: VALIDATION_ERROR }
+            message: { type: string }
+            details: { type: array, items: { type: object } }

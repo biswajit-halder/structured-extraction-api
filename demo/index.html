@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Structured Extraction API — Demo</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="glow"></div>
+  <main class="shell">
+    <header>
+      <div class="pill">Portfolio project · $0 cost</div>
+      <h1>Structured <span>Extraction</span> API</h1>
+      <p class="subtitle">Messy resume or job-posting text in. Validated, typed JSON out — cached so repeat calls cost nothing.</p>
+    </header>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Request</h2>
+        <div class="mode-switch" role="tablist" aria-label="Mode">
+          <button class="mode active" data-mode="single" role="tab">Single</button>
+          <button class="mode" data-mode="batch" role="tab">Batch (5×)</button>
+        </div>
+      </div>
+
+      <label class="field">
+        <span>API base URL</span>
+        <input id="apiBase" type="url" placeholder="https://your-worker.workers.dev"
+               value="https://structured-extraction-api.bhalder.workers.dev" />
+        <small>Deploy your own Worker and paste its URL here.</small>
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span>Schema</span>
+          <select id="schema">
+            <option value="resume">resume</option>
+            <option value="job_posting">job_posting</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Load an example</span>
+          <select id="fixtureSelect">
+            <option value="">— choose a sample —</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span id="textLabel">Text to extract</span>
+        <textarea id="text" rows="11" placeholder="Paste a resume or job description here…"></textarea>
+        <small id="hint">In batch mode, separate up to 5 documents with a line containing only ---</small>
+      </label>
+
+      <div class="actions">
+        <button id="submit" class="primary">Extract JSON <span aria-hidden="true">→</span></button>
+        <button id="clear" class="ghost">Clear</button>
+        <span class="cache-note">Repeat the same text to see <b>X-Cache: HIT</b> (0 model calls).</span>
+      </div>
+    </section>
+
+    <section class="card output">
+      <div class="card-head">
+        <h2>Response</h2>
+        <div id="badges" class="badges"></div>
+      </div>
+      <pre id="result"><code>// result will appear here</code></pre>
+      <div id="error" class="error" hidden></div>
+    </section>
+
+    <footer>
+      Built with Hono · Cloudflare Workers · D1 · KV · free OpenRouter models ·
+      <a href="https://github.com/" target="_blank" rel="noreferrer">source</a>
+    </footer>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>

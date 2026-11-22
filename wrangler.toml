@@ -1,0 +1,24 @@
+name = "structured-extraction-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-22"
+compatibility_flags = ["nodejs_compat"]
+
+# Free tier: 100,000 requests/day, 10ms CPU per invocation (network wait is not CPU).
+[vars]
+DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl:free"
+FALLBACK_MODELS = "inclusionai/ling-3.2-flash:free,baidu/ernie-5.5-flash-preview:free,particle-ai/particle-1:free"
+REQUEST_TIMEOUT_MS = "20000"
+ALLOWED_ORIGIN = "*"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "structured-extraction-db"
+database_id = "98cf013f-4d0b-4e4b-a0df-28ad9cf2d433"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "bd308b95001245d7872f42fe18d6ac3e"
+
+# Secrets (set with `wrangler secret put`):
+#   OPENROUTER_API_KEY
+#   ADMIN_TOKEN
