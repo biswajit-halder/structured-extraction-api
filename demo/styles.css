@@ -97,9 +97,13 @@ button.primary, button.ghost {
 button.primary { background: linear-gradient(135deg, var(--accent), #34d399); color: #06251b; }
 button.primary:disabled { opacity: .6; cursor: wait; }
 button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+button.small { padding: 6px 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+button.small:disabled { opacity: .4; cursor: not-allowed; }
+button.small.copied { color: var(--accent); border-color: rgba(110,231,183,.5); }
 .cache-note { color: var(--muted); font-size: 12px; margin-left: auto; }
 .cache-note b { color: var(--accent); }
 
+.head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .badges { display: flex; gap: 8px; flex-wrap: wrap; }
 .badge { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .badge.hit { color: var(--accent); border-color: rgba(110,231,183,.4); }

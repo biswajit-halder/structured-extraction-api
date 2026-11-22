@@ -9,9 +9,11 @@ const errorEl = $('#error');
 const badgesEl = $('#badges');
 const submitBtn = $('#submit');
 const clearBtn = $('#clear');
+const copyBtn = $('#copyResult');
 
 let mode = 'single';
 let fixtures = [];
+let lastResponseText = null;
 
 const base = () => apiBaseInput.value.trim().replace(/\/+$/, '');
 
@@ -24,6 +26,10 @@ function clearOutput() {
   errorEl.hidden = true;
   badgesEl.innerHTML = '';
   resultEl.innerHTML = '<code>// result will appear here</code>';
+  lastResponseText = null;
+  copyBtn.disabled = true;
+  copyBtn.classList.remove('copied');
+  copyBtn.textContent = 'Copy JSON';
 }
 
 async function loadFixtures() {
@@ -97,8 +103,10 @@ async function submit() {
       throw new Error(`${body?.error?.code || 'HTTP ERROR'}: ${body?.error?.message || response.status}${detail}`);
     }
 
-    resultEl.innerHTML = `<code>${escapeHtml(JSON.stringify(body, null, 2))}</code>`;
-    renderBadges(mode === 'single' ? body.meta : body.meta);
+    lastResponseText = JSON.stringify(body, null, 2);
+    resultEl.innerHTML = `<code>${escapeHtml(lastResponseText)}</code>`;
+    copyBtn.disabled = false;
+    renderBadges(body.meta);
   } catch (error) {
     showError(error instanceof Error ? error.message : String(error));
   } finally {
@@ -112,6 +120,35 @@ function escapeHtml(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[char]);
 }
+
+async function copyResponse() {
+  if (!lastResponseText) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(lastResponseText);
+    } else {
+      // Fallback for non-secure contexts (e.g. http://localhost)
+      const area = document.createElement('textarea');
+      area.value = lastResponseText;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy JSON';
+      copyBtn.classList.remove('copied');
+    }, 1500);
+  } catch (error) {
+    showError(`Could not copy: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+copyBtn.addEventListener('click', copyResponse);
 
 document.querySelectorAll('.mode').forEach((button) => {
   button.addEventListener('click', () => {

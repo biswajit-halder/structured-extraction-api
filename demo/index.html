@@ -63,7 +63,10 @@
     <section class="card output">
       <div class="card-head">
         <h2>Response</h2>
-        <div id="badges" class="badges"></div>
+        <div class="head-actions">
+          <div id="badges" class="badges"></div>
+          <button id="copyResult" class="ghost small" disabled>Copy JSON</button>
+        </div>
       </div>
       <pre id="result"><code>// result will appear here</code></pre>
       <div id="error" class="error" hidden></div>
@@ -71,7 +74,7 @@
 
     <footer>
       Built with Hono · Cloudflare Workers · D1 · KV · free OpenRouter models ·
-      <a href="https://github.com/" target="_blank" rel="noreferrer">source</a>
+      <a href="https://github.com/biswajit-halder/structured-extraction-api" target="_blank" rel="noreferrer">source</a>
     </footer>
   </main>
   <script src="./app.js"></script>
